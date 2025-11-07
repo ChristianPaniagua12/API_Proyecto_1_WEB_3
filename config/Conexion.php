@@ -16,16 +16,14 @@ if (!function_exists('ejecutarConsulta')) {
     function ejecutarConsulta($sql)
     {
         global $conexion;
-        $query = $conexion->query($sql);
-        return $query;
+        return $conexion->query($sql);
     }
 
     function ejecutarConsultaSimpleFila($sql)
     {
         global $conexion;
         $stmt = $conexion->query($sql);
-        $row = $stmt->fetch();
-        return $row;
+        return $stmt->fetch();
     }
 
     function ejecutarConsulta_retornarID($sql)
