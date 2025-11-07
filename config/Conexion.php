@@ -1,51 +1,43 @@
-<?php 
+<?php
 require_once "global.php";
 
-$conexion = new mysqli(DB_HOST, DB_USERNAME, DB_PASSWORD, DB_NAME, DB_PORT);
-
-if ($conexion->connect_errno) {
-    printf("Falló la conexión a la base de datos: %s\n", $conexion->connect_error);
-    exit();
+try {
+    $dsn = "mysql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME . ";charset=" . DB_ENCODE;
+    $conexion = new PDO($dsn, DB_USERNAME, DB_PASSWORD, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_OBJ
+    ]);
+} catch (PDOException $e) {
+    die("Error de conexión: " . $e->getMessage());
 }
 
-mysqli_query($conexion, 'SET NAMES "' . DB_ENCODE . '"');
+if (!function_exists('ejecutarConsulta')) {
 
-if (!function_exists('ejecutarConsulta'))
-{
-	function ejecutarConsulta($sql)
-	{
-		global $conexion;
-		$query = $conexion->query($sql);
-		return $query;
-	}
-
-	function ejecutarConsultaSimpleFila($sql)
-{
-    global $conexion;
-    $query = $conexion->query($sql);
-    
-    if (!$query) {
-     error_log("Error SQL: " . $conexion->error . " | Query: " . $sql);
-        return false;
+    function ejecutarConsulta($sql)
+    {
+        global $conexion;
+        $query = $conexion->query($sql);
+        return $query;
     }
-    
-    $row = $query->fetch_assoc();
-    return $row;
+
+    function ejecutarConsultaSimpleFila($sql)
+    {
+        global $conexion;
+        $stmt = $conexion->query($sql);
+        $row = $stmt->fetch();
+        return $row;
+    }
+
+    function ejecutarConsulta_retornarID($sql)
+    {
+        global $conexion;
+        $conexion->query($sql);
+        return $conexion->lastInsertId();
+    }
+
+    function limpiarCadena($str)
+    {
+        return htmlspecialchars(trim($str));
+    }
 }
-
-	function ejecutarConsulta_retornarID($sql)
-	{
-		global $conexion;
-		$query = $conexion->query($sql);		
-		return $conexion->insert_id;			
-	}
-
-	function limpiarCadena($str)
-	{
-		global $conexion;
-		$str = mysqli_real_escape_string($conexion,trim($str));
-		return htmlspecialchars($str);
-	}
-}
-
 ?>
