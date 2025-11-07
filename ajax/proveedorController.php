@@ -38,15 +38,15 @@ try {
             break;
 
         case "GET":
-            $nombre = $_GET["nombre"] ?? ($body["Nombre"] ?? null);
-            if (!empty($nombre)) {
+            $data = [];
+
+            if (isset($_GET["nombre"]) && !empty($_GET["nombre"])) {
+                $nombre = $_GET["nombre"];
                 $rspta = $proveedor->buscarPorNombre($nombre);
             } else {
                 $rspta = $proveedor->listar();
             }
 
-
-            $data = [];
             while ($reg = $rspta->fetch(PDO::FETCH_OBJ)) {
                 $data[] = [
                     "Codigo" => $reg->Codigo,
@@ -64,6 +64,7 @@ try {
                 "aaData" => $data
             ]);
             break;
+
 
         default:
             http_response_code(405);
