@@ -34,12 +34,6 @@ class Proveedor
         return ejecutarConsulta($sql);
     }
 
-    public function mostrar($nombre)
-    {
-        $sql = "SELECT * FROM proveedor WHERE Nombre='$nombre'";
-        return ejecutarConsultaSimpleFila($sql);
-    }
-
     public function listar()
     {
         $sql = "SELECT * FROM proveedor";

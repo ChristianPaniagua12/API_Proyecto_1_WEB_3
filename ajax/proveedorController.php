@@ -38,12 +38,13 @@ try {
             break;
 
         case "GET":
-            if (isset($_GET["nombre"]) && !empty($_GET["nombre"])) {
-                $nombre = $_GET["nombre"];
+            $nombre = $_GET["nombre"] ?? ($body["Nombre"] ?? null);
+            if (!empty($nombre)) {
                 $rspta = $proveedor->buscarPorNombre($nombre);
             } else {
                 $rspta = $proveedor->listar();
             }
+
 
             $data = [];
             while ($reg = $rspta->fetch(PDO::FETCH_OBJ)) {
