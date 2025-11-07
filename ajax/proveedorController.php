@@ -1,9 +1,11 @@
 <?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
 header("Content-Type: application/json");
 
-require_once(".../config/Conexion.php");
-require_once(".../modelos/Proveedor.php");
+require_once("../config/Conexion.php");
+require_once("../modelos/Proveedor.php");
 
 $proveedor = new Proveedor();
 
