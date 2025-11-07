@@ -44,7 +44,9 @@ try {
             break;
 
         case "GET":
-            $nombre = $_GET["nombre"] ?? null;
+            // Aceptar 'nombre' desde URL (?nombre=...) o desde el body JSON
+            $nombre = $_GET["nombre"] ?? ($body["nombre"] ?? null);
+
             if (!empty($nombre)) {
                 $rspta = $proveedor->buscarPorNombre($nombre);
             } else {
