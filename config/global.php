@@ -1,9 +1,9 @@
 <?php
-define("DB_HOST", "hopper.proxy.rlwy.net"); 
-define("DB_PORT", "43589"); 
-define("DB_NAME", "railway"); 
-define("DB_USERNAME", "root"); 
-define("DB_PASSWORD", "lwFsADtBHQFwBfRDmOuZStrXClcENMed"); 
+define("DB_HOST", getenv("MYSQLHOST") ?: "mysql.railway.internal"); 
+define("DB_PORT", getenv("MYSQLPORT") ?: "3306"); 
+define("DB_NAME", getenv("MYSQL_DATABASE") ?: "proyecto1web"); 
+define("DB_USERNAME", getenv("MYSQLUSER") ?: "root"); 
+define("DB_PASSWORD", getenv("MYSQLPASSWORD") ?: ""); 
 define("DB_ENCODE", "utf8");
 
 define("PRO_NOMBRE", "ITProyecto");
