@@ -12,74 +12,66 @@ $proveedor = new Proveedor();
 $method = $_SERVER['REQUEST_METHOD'];
 $body = json_decode(file_get_contents("php://input"), true);
 
-switch ($method) {
+try {
 
-    case "POST":
-        $rspta = $proveedor->insertar($body["codigo"], $body["nombre"], $body["telefono"], $body["correo"], $body["direccion"]);
-        if (intval($rspta) == 1) {
-            echo json_encode(["Correcto" => "Proveedor agregado"]);
-        }
-        if (intval($rspta) == 1062) {
-            echo json_encode(["Error" => "Código de proveedor repetido"]);
-        }
-        break;
+    switch ($method) {
 
-    case "PUT":
-        $rspta = $proveedor->editar($body["codigo"], $body["nombre"], $body["telefono"], $body["correo"], $body["direccion"]);
-        echo json_encode($rspta ? ["Correcto" => "Proveedor actualizado"] : ["Error" => "Proveedor no se pudo actualizar"]);
-        break;
+        case "POST":
+            $rspta = $proveedor->insertar($body["codigo"], $body["nombre"], $body["telefono"], $body["correo"], $body["direccion"]);
+            if (intval($rspta) == 1) {
+                echo json_encode(["Correcto" => "Proveedor agregado"]);
+            } elseif (intval($rspta) == 1062) {
+                echo json_encode(["Error" => "Código de proveedor repetido"]);
+            } else {
+                echo json_encode(["Error" => "No se pudo agregar el proveedor."]);
+            }
+            break;
 
-    case "DELETE":
-        $rspta = $proveedor->eliminar($body["codigo"]);
-        echo json_encode($rspta ? ["Correcto" => "Proveedor eliminado"] : ["Error" => "Proveedor no se pudo eliminar"]);
-        break;
+        case "PUT":
+            $rspta = $proveedor->editar($body["codigo"], $body["nombre"], $body["telefono"], $body["correo"], $body["direccion"]);
+            echo json_encode($rspta ? ["Correcto" => "Proveedor actualizado"] : ["Error" => "Proveedor no se pudo actualizar"]);
+            break;
 
-    case "GET":
-        if (isset($_GET["nombre"]) && !empty($_GET["nombre"])) {
-            $nombre = $_GET["nombre"];
-            $rspta = $proveedor->buscarPorNombre($nombre);
-            $data = array();
+        case "DELETE":
+            $rspta = $proveedor->eliminar($body["codigo"]);
+            echo json_encode($rspta ? ["Correcto" => "Proveedor eliminado"] : ["Error" => "Proveedor no se pudo eliminar"]);
+            break;
 
-            while ($reg = $rspta->fetch_object()) {
-                $data[] = array(
-                    "0" => $reg->Codigo,
-                    "1" => $reg->Nombre,
-                    "2" => $reg->Telefono,
-                    "3" => $reg->Correo,
-                    "4" => $reg->Direccion
-                );
+        case "GET":
+            if (isset($_GET["nombre"]) && !empty($_GET["nombre"])) {
+                $nombre = $_GET["nombre"];
+                $rspta = $proveedor->buscarPorNombre($nombre);
+            } else {
+                $rspta = $proveedor->listar();
             }
 
-            $results = array(
+            $data = [];
+            while ($reg = $rspta->fetch(PDO::FETCH_OBJ)) {
+                $data[] = [
+                    "Codigo" => $reg->Codigo,
+                    "Nombre" => $reg->Nombre,
+                    "Telefono" => $reg->Telefono,
+                    "Correo" => $reg->Correo,
+                    "Direccion" => $reg->Direccion
+                ];
+            }
+
+            echo json_encode([
                 "sEcho" => 1,
                 "iTotalRecords" => count($data),
                 "iTotalDisplayRecords" => count($data),
                 "aaData" => $data
-            );
-            echo json_encode($results);
+            ]);
             break;
-        }
 
-        $rspta = $proveedor->listar();
-        $data = array();
+        default:
+            http_response_code(405);
+            echo json_encode(["Error" => "Método no permitido"]);
+            break;
+    }
 
-        while ($reg = $rspta->fetch_object()) {
-            $data[] = array(
-                "0" => $reg->Codigo,
-                "1" => $reg->Nombre,
-                "2" => $reg->Telefono,
-                "3" => $reg->Correo,
-                "4" => $reg->Direccion
-            );
-        }
-        $results = array(
-            "sEcho" => 1,
-            "iTotalRecords" => count($data),
-            "iTotalDisplayRecords" => count($data),
-            "aaData" => $data
-        );
-        echo json_encode($results);
-        break;
-
+} catch (Exception $e) {
+    http_response_code(500);
+    echo json_encode(["Error" => "Error interno: " . $e->getMessage()]);
 }
 ?>
