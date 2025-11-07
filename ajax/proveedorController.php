@@ -2,7 +2,7 @@
 
 header("Content-Type: application/json");
 
-require_once("../config/conexion.php");
+require_once("../config/Conexion.php");
 require_once("../modelos/Proveedor.php");
 
 $proveedor = new Proveedor();
