@@ -2,10 +2,18 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
 header("Content-Type: application/json");
 
-require_once("../config/Conexion.php");
-require_once("../modelos/Proveedor.php");
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
+
+require_once(__DIR__ . "/../config/Conexion.php");
+require_once(__DIR__ . "/../modelos/Proveedor.php");
 
 $proveedor = new Proveedor();
 
@@ -13,7 +21,6 @@ $method = $_SERVER['REQUEST_METHOD'];
 $body = json_decode(file_get_contents("php://input"), true);
 
 try {
-
     switch ($method) {
 
         case "POST":
@@ -38,22 +45,21 @@ try {
             break;
 
         case "GET":
-            $data = [];
-
-            if (isset($_GET["nombre"]) && !empty($_GET["nombre"])) {
-                $nombre = $_GET["nombre"];
+            $nombre = $_GET["nombre"] ?? null;
+            if (!empty($nombre)) {
                 $rspta = $proveedor->buscarPorNombre($nombre);
             } else {
                 $rspta = $proveedor->listar();
             }
 
-            while ($reg = $rspta->fetch(PDO::FETCH_OBJ)) {
+            $data = [];
+            while ($reg = $rspta->fetch()) {
                 $data[] = [
-                    "Codigo" => $reg->Codigo,
-                    "Nombre" => $reg->Nombre,
-                    "Telefono" => $reg->Telefono,
-                    "Correo" => $reg->Correo,
-                    "Direccion" => $reg->Direccion
+                    $reg->Codigo,
+                    $reg->Nombre,
+                    $reg->Telefono,
+                    $reg->Correo,
+                    $reg->Direccion
                 ];
             }
 
@@ -64,7 +70,6 @@ try {
                 "aaData" => $data
             ]);
             break;
-
 
         default:
             http_response_code(405);
