@@ -1,15 +1,22 @@
 # Imagen base de PHP con Apache
 FROM php:8.2-apache
 
-# Instalar el driver de MySQL para PDO
-RUN docker-php-ext-install pdo pdo_mysql
+# Instalar extensiones necesarias
+RUN apt-get update && apt-get install -y libpng-dev libjpeg-dev libfreetype6-dev && \
+    docker-php-ext-configure gd --with-freetype --with-jpeg && \
+    docker-php-ext-install gd pdo pdo_mysql
 
-# Copiar tu proyecto al contenedor
+# Copiar el proyecto al contenedor
 COPY . /var/www/html/
 
-# Asignar permisos adecuados
+# Dar permisos al contenido
 RUN chown -R www-data:www-data /var/www/html
 
-# Exponer el puerto estándar de Apache
+# Habilitar el módulo de reescritura de Apache
+RUN a2enmod rewrite
+
+# Exponer el puerto estándar
 EXPOSE 80
 
+# Mantener Apache en ejecución en primer plano
+CMD ["apache2-foreground"]
