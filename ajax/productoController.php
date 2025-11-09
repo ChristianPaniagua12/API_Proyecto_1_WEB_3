@@ -1,4 +1,9 @@
 <?php
+// Activar TODOS los errores para debugging
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Codigo");
@@ -9,53 +14,53 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
-require_once(__DIR__ . "/../config/Conexion.php");
-require_once(__DIR__ . "/../modelos/Producto.php");
-require_once(__DIR__ . "/../modelos/Key.php");
-
-$producto = new Producto();
-$key = new Key();
-
-$method = $_SERVER['REQUEST_METHOD'];
-
-// Verificar el header 'Codigo' usando $_SERVER (más compatible)
-$codigo_header = $_SERVER['HTTP_CODIGO'] ?? null;
-
-if (!$codigo_header) {
-    echo json_encode(["Error" => "Acceso no autorizado - Código requerido"]);
-    exit();
-}
-
-$verificacion = $key->VerificarKEY($codigo_header);
-
-if (empty($verificacion)) {
-    $desactivado = $key->VerificarDesactivado($codigo_header);
-    if ($desactivado) {
-        echo json_encode(["Error" => "Credenciales desactivadas"]);
-    } else {
-        echo json_encode(["Error" => "Acceso no autorizado - Código inválido"]);
-    }
-    exit();
-}
-
-$llave = $verificacion[0]['Key'];
-
-function Desencriptar_BODY($json, $llave)
-{
-    $cifrado = "aes-256-ecb";
-    $json_desencriptado = openssl_decrypt(
-        base64_decode($json),
-        $cifrado,
-        $llave,
-        OPENSSL_RAW_DATA
-    );
-    if ($json_desencriptado === false) {
-        return false;
-    }
-    return $json_desencriptado;
-}
-
 try {
+    require_once(__DIR__ . "/../config/Conexion.php");
+    require_once(__DIR__ . "/../modelos/Producto.php");
+    require_once(__DIR__ . "/../modelos/Key.php");
+
+    $producto = new Producto();
+    $key = new Key();
+
+    $method = $_SERVER['REQUEST_METHOD'];
+
+    // Verificar el header 'Codigo'
+    $codigo_header = $_SERVER['HTTP_CODIGO'] ?? null;
+
+    if (!$codigo_header) {
+        echo json_encode(["Error" => "Acceso no autorizado - Código requerido", "Debug" => "No se encontró HTTP_CODIGO"]);
+        exit();
+    }
+
+    $verificacion = $key->VerificarKEY($codigo_header);
+
+    if (empty($verificacion)) {
+        $desactivado = $key->VerificarDesactivado($codigo_header);
+        if ($desactivado) {
+            echo json_encode(["Error" => "Credenciales desactivadas"]);
+        } else {
+            echo json_encode(["Error" => "Acceso no autorizado - Código inválido"]);
+        }
+        exit();
+    }
+
+    $llave = $verificacion[0]['Key'];
+
+    function Desencriptar_BODY($json, $llave)
+    {
+        $cifrado = "aes-256-ecb";
+        $json_desencriptado = openssl_decrypt(
+            base64_decode($json),
+            $cifrado,
+            $llave,
+            OPENSSL_RAW_DATA
+        );
+        if ($json_desencriptado === false) {
+            return false;
+        }
+        return $json_desencriptado;
+    }
+
     // Para métodos que envían body encriptado
     if ($method !== "GET") {
         $body_encriptado = file_get_contents("php://input");
@@ -135,6 +140,20 @@ try {
 
 } catch (Exception $e) {
     http_response_code(500);
-    echo json_encode(["Error" => "Error interno: " . $e->getMessage()]);
+    echo json_encode([
+        "Error" => "Error interno",
+        "Mensaje" => $e->getMessage(),
+        "Archivo" => $e->getFile(),
+        "Linea" => $e->getLine(),
+        "Trace" => $e->getTraceAsString()
+    ]);
+} catch (Error $e) {
+    http_response_code(500);
+    echo json_encode([
+        "Error" => "Error fatal",
+        "Mensaje" => $e->getMessage(),
+        "Archivo" => $e->getFile(),
+        "Linea" => $e->getLine()
+    ]);
 }
 ?>
