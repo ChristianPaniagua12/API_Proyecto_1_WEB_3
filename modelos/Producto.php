@@ -47,33 +47,12 @@ class Producto
         $sql = "SELECT * FROM producto WHERE Codigo='$codigo'";
         return ejecutarConsultaSimpleFila($sql);
     }
-
-    public function seleccionar($codigo)
-    {
-        $sql = "SELECT p.Codigo, p.Nombre, p.Precio, pr.Nombre AS Proveedor, pr.Codigo AS CodigoProveedor
-                FROM producto p
-                JOIN proveedor pr ON p.CodigoProveedor = pr.Codigo
-                WHERE p.Codigo='$codigo'";
-        return ejecutarConsultaSimpleFila($sql);
-    }
-
+    
     public function listar()
     {
         $sql = "SELECT p.Codigo, p.Nombre, p.Precio, pr.Nombre AS Proveedor
                 FROM producto p
                 JOIN proveedor pr ON p.CodigoProveedor = pr.Codigo";
-        return ejecutarConsulta($sql);
-    }
-
-    public function buscar_proveedor($codigoProveedor)
-    {
-        $sql = "SELECT * FROM proveedor WHERE Codigo = '$codigoProveedor'";
-        return ejecutarConsulta($sql);
-    }
-
-    public function listar_proveedores()
-    {
-        $sql = "SELECT * FROM proveedor";
         return ejecutarConsulta($sql);
     }
 }
