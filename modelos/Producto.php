@@ -9,22 +9,25 @@ class Producto
     public function insertar($codigo, $nombre, $precio, $codigoProveedor)
     {
         try {
-            $sql_check = "SELECT Nombre FROM producto WHERE Nombre = '$nombre' OR Codigo = '$codigo'";
+            $sql_check = "SELECT Codigo FROM producto WHERE Codigo = '$codigo'";
             $res_check = ejecutarConsulta($sql_check);
 
-            $row_count = $res_check->rowCount();
+            $row = $res_check->fetch(PDO::FETCH_ASSOC);
 
-            if ($row_count > 0) {
+            if ($row) {
                 return 1062;
             } else {
                 $sql = "INSERT INTO producto (Codigo, Nombre, Precio, CodigoProveedor)
                     VALUES ('$codigo', '$nombre', '$precio', '$codigoProveedor')";
-                return ejecutarConsulta($sql);
+                $insert = ejecutarConsulta($sql);
+
+                return $insert ? 1 : 0;
             }
         } catch (Exception $e) {
             return $e->getCode();
         }
     }
+
 
 
     public function editar($codigo, $nombre, $precio, $codigoProveedor)
