@@ -6,24 +6,26 @@ class Producto
     public function __construct()
     {
     }
-
     public function insertar($codigo, $nombre, $precio, $codigoProveedor)
     {
         try {
             $sql_check = "SELECT Nombre FROM producto WHERE Nombre = '$nombre' OR Codigo = '$codigo'";
             $res_check = ejecutarConsulta($sql_check);
 
-            if ($res_check->num_rows > 0) {
+            $row_count = $res_check->rowCount();
+
+            if ($row_count > 0) {
                 return 1062;
             } else {
                 $sql = "INSERT INTO producto (Codigo, Nombre, Precio, CodigoProveedor)
-                        VALUES ('$codigo', '$nombre', '$precio', '$codigoProveedor')";
+                    VALUES ('$codigo', '$nombre', '$precio', '$codigoProveedor')";
                 return ejecutarConsulta($sql);
             }
         } catch (Exception $e) {
             return $e->getCode();
         }
     }
+
 
     public function editar($codigo, $nombre, $precio, $codigoProveedor)
     {
