@@ -1,14 +1,16 @@
-<?php 
+<?php
 require __DIR__ . "/../config/Conexion.php";
 
 class Cliente
 {
-    public function __construct() {}
+    public function __construct()
+    {
+    }
 
     public function insertar($cedula, $nombre, $telefono, $correo)
     {
         try {
-           
+
             $sql_check = "SELECT 1 FROM cliente WHERE Cedula = '$cedula' LIMIT 1";
             $res_check = ejecutarConsulta($sql_check);
 
@@ -35,7 +37,7 @@ class Cliente
     }
 
     public function eliminar($cedula)
-    {   
+    {
         $sql = "DELETE FROM cliente WHERE Cedula='$cedula'";
         return ejecutarConsulta($sql);
     }
@@ -43,12 +45,13 @@ class Cliente
     public function mostrar($cedula)
     {
         $sql = "SELECT * FROM cliente WHERE Cedula='$cedula'";
-        return ejecutarConsultaSimpleFila($sql);
+        $res = ejecutarConsulta($sql);
+        return $res ? $res->fetch(PDO::FETCH_ASSOC) : null;
     }
 
     public function listar()
     {
         $sql = "SELECT * FROM cliente";
-        return ejecutarConsulta($sql);        
+        return ejecutarConsulta($sql);
     }
 }
