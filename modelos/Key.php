@@ -13,7 +13,7 @@ class Key
         $query = ejecutarConsulta($sql);
         $resultado = array();
 
-        while ($fila = $query->fetch_assoc()) {
+        while ($fila = $query->fetch(PDO::FETCH_ASSOC)) {  
             $resultado[] = $fila;
         }
 
@@ -24,7 +24,7 @@ class Key
     {
         $sql = "SELECT * FROM api WHERE Codigo = '$codigo' AND Status = 0";
         $query = ejecutarConsulta($sql);
-        return $query->fetch_assoc();
+        return $query->fetch(PDO::FETCH_ASSOC);
     }
 }
 ?>
