@@ -53,50 +53,65 @@ try {
             break;
 
         case "GET":
-            $cedula = isset($_GET["cedula"]) ? trim($_GET["cedula"]) : (isset($body["cedula"]) ? trim($body["cedula"]) : null);
+            $cedula = $_GET["cedula"] ?? null;
 
             if (!empty($cedula)) {
-                $rspta = $cliente->mostrar($cedula);
-
-                if ($rspta instanceof PDOStatement) {
-                    $rspta = $rspta->fetch(PDO::FETCH_ASSOC);
+                try {
+                    $rspta = $cliente->mostrar($cedula);
+                    
+                    if (is_array($rspta) && !empty($rspta)) {
+                        echo json_encode($rspta);
+                    } elseif (is_object($rspta) && method_exists($rspta, 'fetch')) {
+                        $data = $rspta->fetch(PDO::FETCH_ASSOC);
+                        if ($data) {
+                            echo json_encode($data);
+                        } else {
+                            echo json_encode(["Error" => "Cliente no encontrado"]);
+                        }
+                    } else {
+                        echo json_encode(["Error" => "Cliente no encontrado"]);
+                    }
+                } catch (Exception $e) {
+                    http_response_code(500);
+                    echo json_encode(["Error" => "Error al buscar cliente: " . $e->getMessage()]);
                 }
-
-                if ($rspta && is_array($rspta)) {
-                    echo json_encode($rspta);
-                } else {
-                    echo json_encode(["Error" => "Cliente no encontrado"]);
-                }
-                break; 
+                break;
             }
 
-            $rspta = $cliente->listar();
-            $data = [];
+            try {
+                $rspta = $cliente->listar();
+                
+                if (!$rspta) {
+                    echo json_encode([
+                        "sEcho" => 1,
+                        "iTotalRecords" => 0,
+                        "iTotalDisplayRecords" => 0,
+                        "aaData" => []
+                    ]);
+                    break;
+                }
 
-            while ($reg = $rspta->fetch(PDO::FETCH_OBJ)) {
-                $data[] = [
-                    "0" => $reg->Cedula,
-                    "1" => $reg->Nombre,
-                    "2" => $reg->Telefono,
-                    "3" => $reg->Correo,
-                    "4" =>
-                        '<button class="btn btn-warning" onclick="editar(\'' . $reg->Cedula . '\')">
-                    <i class="bx bx-pencil"></i>&nbsp;Editar
-                </button>
-                <button class="btn btn-danger ml-2" onclick="showModal(\'' . $reg->Cedula . '\')">
-                    <i class="bx bx-trash"></i>&nbsp;Eliminar
-                </button>'
-                ];
+                $data = [];
+                while ($reg = $rspta->fetch(PDO::FETCH_OBJ)) {
+                    $data[] = [
+                        "Cedula" => $reg->Cedula,
+                        "Nombre" => $reg->Nombre,
+                        "Telefono" => $reg->Telefono,
+                        "Correo" => $reg->Correo
+                    ];
+                }
+
+                echo json_encode([
+                    "sEcho" => 1,
+                    "iTotalRecords" => count($data),
+                    "iTotalDisplayRecords" => count($data),
+                    "aaData" => $data
+                ]);
+            } catch (Exception $e) {
+                http_response_code(500);
+                echo json_encode(["Error" => "Error al listar clientes: " . $e->getMessage()]);
             }
-
-            echo json_encode([
-                "sEcho" => 1,
-                "iTotalRecords" => count($data),
-                "iTotalDisplayRecords" => count($data),
-                "aaData" => $data
-            ]);
             break;
-
 
         default:
             http_response_code(405);
