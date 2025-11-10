@@ -1,9 +1,7 @@
 <?php
-
-
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type");
+header("Access-Control-Allow-Headers: Content-Type, Codigo"); 
 header("Content-Type: application/json");
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -44,7 +42,6 @@ try {
             break;
 
         case "GET":
-            // Aceptar 'nombre' desde URL (?nombre=...) o desde el body JSON
             $nombre = $_GET["nombre"] ?? ($body["nombre"] ?? null);
 
             if (!empty($nombre)) {
@@ -54,7 +51,7 @@ try {
             }
 
             $data = [];
-            while ($reg = $rspta->fetch(PDO::FETCH_OBJ)) { 
+            while ($reg = $rspta->fetch(PDO::FETCH_OBJ)) { // ✅ También cambié fetch() por fetch(PDO::FETCH_OBJ)
                 $data[] = [
                     $reg->Codigo,
                     $reg->Nombre,
