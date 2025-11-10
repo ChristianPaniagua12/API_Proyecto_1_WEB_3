@@ -15,19 +15,34 @@ require_once(__DIR__ . "/../modelos/Cliente.php");
 $cliente = new Cliente();
 
 $method = $_SERVER['REQUEST_METHOD'];
-$body = json_decode(file_get_contents("php://input"), true);
+$raw = file_get_contents("php://input");
+$body = $raw !== '' ? json_decode($raw, true) : null;
+if ($body === null && !empty($_POST)) {
+    $body = $_POST;
+}
+
+function val($arr, $key) {
+    return isset($arr[$key]) ? trim((string)$arr[$key]) : '';
+}
 
 try {
     switch ($method) {
+        case "POST": {
+            if ($body === null) {
+                echo json_encode(["Error" => "Body JSON inválido o ausente"]);
+                break;
+            }
+            $cedula   = val($body, "cedula");
+            $nombre   = val($body, "nombre");
+            $telefono = val($body, "telefono");
+            $correo   = val($body, "correo");
 
-        case "POST":
-            $rspta = $cliente->insertar(
-                $body["cedula"] ?? "",
-                $body["nombre"] ?? "",
-                $body["telefono"] ?? "",
-                $body["correo"] ?? ""
-            );
+            if ($cedula === '' || $nombre === '' || $telefono === '' || $correo === '') {
+                echo json_encode(["Error" => "Faltan campos requeridos"]);
+                break;
+            }
 
+            $rspta = $cliente->insertar($cedula, $nombre, $telefono, $correo);
             if ($rspta == 1) {
                 echo json_encode(["Correcto" => "Cliente agregado"]);
             } elseif ($rspta == 1062) {
@@ -36,27 +51,50 @@ try {
                 echo json_encode(["Error" => "No se pudo agregar el cliente"]);
             }
             break;
+        }
 
-        case "PUT":
-            $rspta = $cliente->editar(
-                $body["cedula"] ?? "",
-                $body["nombre"] ?? "",
-                $body["telefono"] ?? "",
-                $body["correo"] ?? ""
-            );
+        case "PUT": {
+            if ($body === null) {
+                echo json_encode(["Error" => "Body JSON inválido o ausente"]);
+                break;
+            }
+            $cedula   = val($body, "cedula");
+            $nombre   = val($body, "nombre");
+            $telefono = val($body, "telefono");
+            $correo   = val($body, "correo");
+
+            if ($cedula === '' || $nombre === '' || $telefono === '' || $correo === '') {
+                echo json_encode(["Error" => "Faltan campos requeridos"]);
+                break;
+            }
+
+            $rspta = $cliente->editar($cedula, $nombre, $telefono, $correo);
             echo json_encode($rspta ? ["Correcto" => "Cliente actualizado"] : ["Error" => "Cliente no se pudo actualizar"]);
             break;
+        }
 
-        case "DELETE":
-            $rspta = $cliente->eliminar($body["cedula"] ?? "");
+        case "DELETE": {
+            if ($body === null) {
+                echo json_encode(["Error" => "Body JSON inválido o ausente"]);
+                break;
+            }
+            $cedula = val($body, "cedula");
+            if ($cedula === '') {
+                echo json_encode(["Error" => "Cédula requerida"]);
+                break;
+            }
+            $rspta = $cliente->eliminar($cedula);
             echo json_encode($rspta ? ["Correcto" => "Cliente eliminado"] : ["Error" => "Cliente no se pudo eliminar"]);
             break;
+        }
 
-        case "GET":
-            // Si viene cédula por query (?cedula=) o body, mostrar uno; si no, listar todos
-            $cedula = $_GET["cedula"] ?? ($body["cedula"] ?? null);
+        case "GET": {
+            $cedula = isset($_GET["cedula"]) ? trim((string)$_GET["cedula"]) : '';
+            if ($cedula === '' && is_array($body)) {
+                $cedula = val($body, "cedula"); 
+            }
 
-            if (!empty($cedula)) {
+            if ($cedula !== '') {
                 $rspta = $cliente->mostrar($cedula);
                 if (!empty($rspta) && isset($rspta["Cedula"])) {
                     echo json_encode($rspta);
@@ -68,7 +106,6 @@ try {
 
             $rspta = $cliente->listar();
             $data = [];
-
             while ($reg = $rspta->fetch(PDO::FETCH_OBJ)) {
                 $data[] = [
                     $reg->Cedula,
@@ -77,7 +114,6 @@ try {
                     $reg->Correo
                 ];
             }
-
             echo json_encode([
                 "sEcho" => 1,
                 "iTotalRecords" => count($data),
@@ -85,13 +121,13 @@ try {
                 "aaData" => $data
             ]);
             break;
+        }
 
         default:
             http_response_code(405);
             echo json_encode(["Error" => "Método no permitido"]);
             break;
     }
-
 } catch (Exception $e) {
     http_response_code(500);
     echo json_encode(["Error" => "Error interno: " . $e->getMessage()]);
