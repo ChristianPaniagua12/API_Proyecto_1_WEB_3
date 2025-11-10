@@ -15,12 +15,29 @@ require_once(__DIR__ . "/../modelos/Cliente.php");
 $cliente = new Cliente();
 
 $method = $_SERVER['REQUEST_METHOD'];
-$body = json_decode(file_get_contents("php://input"), true);
+
+// DEPURACIÓN: Captura el raw input
+$rawInput = file_get_contents("php://input");
+$body = json_decode($rawInput, true);
+
+// TEMPORAL: Log para ver qué llega
+error_log("Raw input: " . $rawInput);
+error_log("Body decoded: " . print_r($body, true));
 
 try {
     switch ($method) {
 
         case "POST":
+            // VERIFICA QUE LOS DATOS EXISTEN
+            if (empty($body)) {
+                echo json_encode([
+                    "Error" => "No se recibieron datos", 
+                    "raw" => $rawInput,
+                    "content_type" => $_SERVER['CONTENT_TYPE'] ?? 'no definido'
+                ]);
+                break;
+            }
+
             $rspta = $cliente->insertar(
                 $body["cedula"] ?? "",
                 $body["nombre"] ?? "",
