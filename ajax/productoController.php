@@ -1,5 +1,4 @@
 <?php
-// Activar TODOS los errores para debugging
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
@@ -24,11 +23,10 @@ try {
 
     $method = $_SERVER['REQUEST_METHOD'];
 
-    // Verificar el header 'Codigo'
     $codigo_header = $_SERVER['HTTP_CODIGO'] ?? null;
 
     if (!$codigo_header) {
-        echo json_encode(["Error" => "Acceso no autorizado - Código requerido", "Debug" => "No se encontró HTTP_CODIGO"]);
+        echo json_encode(["Error" => "Acceso no autorizado - Código requerido"]);
         exit();
     }
 
@@ -36,11 +34,9 @@ try {
 
     if (empty($verificacion)) {
         $desactivado = $key->VerificarDesactivado($codigo_header);
-        if ($desactivado) {
-            echo json_encode(["Error" => "Credenciales desactivadas"]);
-        } else {
-            echo json_encode(["Error" => "Acceso no autorizado - Código inválido"]);
-        }
+        echo json_encode([
+            "Error" => $desactivado ? "Credenciales desactivadas" : "Acceso no autorizado - Código inválido"
+        ]);
         exit();
     }
 
@@ -61,17 +57,17 @@ try {
         return $json_desencriptado;
     }
 
-    // Para métodos que envían body encriptado
-    if ($method !== "GET") {
-        $body_encriptado = file_get_contents("php://input");
-        $body = json_decode(Desencriptar_BODY($body_encriptado, $llave), true);
+    $body_encriptado = file_get_contents("php://input");
+    $body = [];
+
+    if (!empty($body_encriptado)) {
+        $json_desencriptado = Desencriptar_BODY($body_encriptado, $llave);
+        $body = json_decode($json_desencriptado, true);
 
         if ($body === null) {
             echo json_encode(["Error" => "Error al desencriptar los datos"]);
             exit();
         }
-    } else {
-        $body = [];
     }
 
     $codigo = $body["codigo"] ?? ($_GET["codigo"] ?? "");
@@ -80,7 +76,6 @@ try {
     $codigoProveedor = $body["codigoProveedor"] ?? "";
 
     switch ($method) {
-
         case "POST":
             $rspta = $producto->insertar($codigo, $nombre, $precio, $codigoProveedor);
             if (intval($rspta) == 1) {
@@ -94,63 +89,64 @@ try {
 
         case "PUT":
             $rspta = $producto->editar($codigo, $nombre, $precio, $codigoProveedor);
-            echo json_encode($rspta ? ["Correcto" => "Producto actualizado"] : ["Error" => "Producto no se pudo actualizar"]);
+            echo json_encode($rspta
+                ? ["Correcto" => "Producto actualizado"]
+                : ["Error" => "Producto no se pudo actualizar"]
+            );
             break;
 
         case "DELETE":
             $rspta = $producto->eliminar($codigo);
-            echo json_encode($rspta ? ["Correcto" => "Producto eliminado"] : ["Error" => "Producto no se pudo eliminar"]);
+            echo json_encode($rspta
+                ? ["Correcto" => "Producto eliminado"]
+                : ["Error" => "Producto no se pudo eliminar"]
+            );
             break;
 
         case "GET":
-    $codigo = $_GET["codigo"] ?? ($body["codigo"] ?? null);
+            if (!empty($codigo)) {
+                $rspta = $producto->mostrar($codigo);
 
-    if (!empty($codigo)) {
-        $rspta = $producto->mostrar($codigo);
+                if (!empty($rspta) && isset($rspta["Codigo"])) {
+                    $data[] = [
+                        $rspta["Codigo"],
+                        $rspta["Nombre"],
+                        $rspta["Precio"],
+                        $rspta["CodigoProveedor"] ?? null
+                    ];
 
-        if (isset($rspta["Codigo"])) {
-            $data[] = [
-                $rspta["Codigo"],
-                $rspta["Nombre"],
-                $rspta["Precio"],
-                $rspta["CodigoProveedor"] ?? null
-            ];
+                    echo json_encode([
+                        "sEcho" => 1,
+                        "iTotalRecords" => 1,
+                        "iTotalDisplayRecords" => 1,
+                        "aaData" => $data
+                    ]);
+                    break;
+                }
+
+                echo json_encode(["Error" => "Producto no encontrado"]);
+                break;
+            }
+
+            $rspta = $producto->listar();
+            $data = [];
+
+            while ($reg = $rspta->fetch(PDO::FETCH_OBJ)) {
+                $data[] = [
+                    "0" => $reg->Codigo,
+                    "1" => $reg->Nombre,
+                    "2" => $reg->Precio,
+                    "3" => $reg->Proveedor
+                ];
+            }
 
             echo json_encode([
                 "sEcho" => 1,
-                "iTotalRecords" => 1,
-                "iTotalDisplayRecords" => 1,
+                "iTotalRecords" => count($data),
+                "iTotalDisplayRecords" => count($data),
                 "aaData" => $data
             ]);
             break;
-        }
-
-        echo json_encode(["Error" => "Producto no encontrado"]);
-        break;
-    }
-
-    $rspta = $producto->listar();
-    $data = [];
-
-    while ($reg = $rspta->fetch(PDO::FETCH_OBJ)) {
-        $data[] = [
-            "0" => $reg->Codigo,
-            "1" => $reg->Nombre,
-            "2" => $reg->Precio,
-            "3" => $reg->Proveedor
-        ];
-    }
-
-    echo json_encode([
-        "sEcho" => 1,
-        "iTotalRecords" => count($data),
-        "iTotalDisplayRecords" => count($data),
-        "aaData" => $data
-    ]);
-    break;
-
-
-
 
         default:
             http_response_code(405);
@@ -164,8 +160,7 @@ try {
         "Error" => "Error interno",
         "Mensaje" => $e->getMessage(),
         "Archivo" => $e->getFile(),
-        "Linea" => $e->getLine(),
-        "Trace" => $e->getTraceAsString()
+        "Linea" => $e->getLine()
     ]);
 } catch (Error $e) {
     http_response_code(500);
