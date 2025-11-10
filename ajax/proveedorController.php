@@ -1,7 +1,7 @@
 <?php
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Codigo"); 
+header("Access-Control-Allow-Headers: Content-Type, Codigo");
 header("Content-Type: application/json");
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -22,13 +22,14 @@ try {
 
         case "POST":
             $rspta = $proveedor->insertar($body["codigo"], $body["nombre"], $body["telefono"], $body["correo"], $body["direccion"]);
-            if (intval($rspta) == 1) {
-                echo json_encode(["Correcto" => "Proveedor agregado"]);
-            } elseif (intval($rspta) == 1062) {
-                echo json_encode(["Error" => "Código de proveedor repetido"]);
+            if ($rspta == 1) {
+                echo json_encode(["Correcto" => "Producto agregado"]);
+            } elseif ($rspta == 1062) {
+                echo json_encode(["Error" => "Código de producto repetido"]);
             } else {
-                echo json_encode(["Error" => "No se pudo agregar el proveedor."]);
+                echo json_encode(["Error" => "No se pudo agregar el producto"]);
             }
+
             break;
 
         case "PUT":
