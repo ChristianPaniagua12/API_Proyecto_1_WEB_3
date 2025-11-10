@@ -54,7 +54,7 @@ try {
             }
 
             $data = [];
-            while ($reg = $rspta->fetch()) {
+            while ($reg = $rspta->fetch(PDO::FETCH_OBJ)) { 
                 $data[] = [
                     $reg->Codigo,
                     $reg->Nombre,
