@@ -1,66 +1,98 @@
 <?php
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
+header("Content-Type: application/json");
 
-require_once "../modelos/Cliente.php";
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
+
+require_once(__DIR__ . "/../config/Conexion.php");
+require_once(__DIR__ . "/../modelos/Cliente.php");
 
 $cliente = new Cliente();
 
-$cedula   = isset($_POST["cedula"]) ? $_POST["cedula"] : "";
-$nombre   = isset($_POST["nombre"]) ? $_POST["nombre"] : "";
-$telefono = isset($_POST["telefono"]) ? $_POST["telefono"] : "";
-$correo   = isset($_POST["correo"]) ? $_POST["correo"] : "";
+$method = $_SERVER['REQUEST_METHOD'];
+$body = json_decode(file_get_contents("php://input"), true);
 
-switch ($_GET["op"]) {
-    case 'guardar':
-        $rspta = $cliente->insertar($cedula, $nombre, $telefono, $correo);
-        if (intval($rspta) == 1) {
-            echo "Cliente agregado";
-        }
-        if (intval($rspta) == 1062) {
-            echo "Cédula de cliente repetida";
-        }
-        break;
+try {
+    switch ($method) {
 
-    case 'editar':
-        $rspta = $cliente->editar($cedula, $nombre, $telefono, $correo);
-        echo $rspta ? "Cliente actualizado" : "Cliente no se pudo actualizar";
-        break;
-
-    case 'eliminar':
-        $rspta = $cliente->eliminar($cedula);
-        echo $rspta ? "Cliente eliminado" : "Cliente no se pudo eliminar";
-        break;
-
-    case 'mostrar':
-        $rspta = $cliente->mostrar($cedula);
-        echo json_encode($rspta);
-        break;
-
-    case 'listar':
-        $rspta = $cliente->listar();
-        $data = array();
-
-        while ($reg = $rspta->fetch_object()) {
-            $data[] = array(
-                "0" => $reg->Cedula,
-                "1" => $reg->Nombre,
-                "2" => $reg->Telefono,
-                "3" => $reg->Correo,
-                "4" =>
-                    '<button class="btn btn-warning" onclick="editar(\'' . $reg->Cedula . '\')">
-                        <i class="bx bx-pencil"></i>&nbsp;Editar
-                    </button>
-                    <button class="btn btn-danger ml-2" onclick="showModal(\'' . $reg->Cedula . '\')">
-                        <i class="bx bx-trash"></i>&nbsp;Eliminar
-                    </button>'
+        case "POST":
+            $rspta = $cliente->insertar(
+                $body["cedula"] ?? "",
+                $body["nombre"] ?? "",
+                $body["telefono"] ?? "",
+                $body["correo"] ?? ""
             );
-        }
-        $results = array(
-            "sEcho" => 1,
-            "iTotalRecords" => count($data),
-            "iTotalDisplayRecords" => count($data),
-            "aaData" => $data
-        );
-        echo json_encode($results);
-        break;
+
+            if ($rspta == 1) {
+                echo json_encode(["Correcto" => "Cliente agregado"]);
+            } elseif ($rspta == 1062) {
+                echo json_encode(["Error" => "Cédula de cliente repetida"]);
+            } else {
+                echo json_encode(["Error" => "No se pudo agregar el cliente"]);
+            }
+            break;
+
+        case "PUT":
+            $rspta = $cliente->editar(
+                $body["cedula"] ?? "",
+                $body["nombre"] ?? "",
+                $body["telefono"] ?? "",
+                $body["correo"] ?? ""
+            );
+            echo json_encode($rspta ? ["Correcto" => "Cliente actualizado"] : ["Error" => "Cliente no se pudo actualizar"]);
+            break;
+
+        case "DELETE":
+            $rspta = $cliente->eliminar($body["cedula"] ?? "");
+            echo json_encode($rspta ? ["Correcto" => "Cliente eliminado"] : ["Error" => "Cliente no se pudo eliminar"]);
+            break;
+
+        case "GET":
+            // Si viene cédula por query (?cedula=) o body, mostrar uno; si no, listar todos
+            $cedula = $_GET["cedula"] ?? ($body["cedula"] ?? null);
+
+            if (!empty($cedula)) {
+                $rspta = $cliente->mostrar($cedula);
+                if (!empty($rspta) && isset($rspta["Cedula"])) {
+                    echo json_encode($rspta);
+                } else {
+                    echo json_encode(["Error" => "Cliente no encontrado"]);
+                }
+                break;
+            }
+
+            $rspta = $cliente->listar();
+            $data = [];
+
+            while ($reg = $rspta->fetch(PDO::FETCH_OBJ)) {
+                $data[] = [
+                    $reg->Cedula,
+                    $reg->Nombre,
+                    $reg->Telefono,
+                    $reg->Correo
+                ];
+            }
+
+            echo json_encode([
+                "sEcho" => 1,
+                "iTotalRecords" => count($data),
+                "iTotalDisplayRecords" => count($data),
+                "aaData" => $data
+            ]);
+            break;
+
+        default:
+            http_response_code(405);
+            echo json_encode(["Error" => "Método no permitido"]);
+            break;
+    }
+
+} catch (Exception $e) {
+    http_response_code(500);
+    echo json_encode(["Error" => "Error interno: " . $e->getMessage()]);
 }
-?>
