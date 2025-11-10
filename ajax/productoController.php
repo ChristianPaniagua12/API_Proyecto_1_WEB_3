@@ -103,41 +103,52 @@ try {
             break;
 
         case "GET":
-            $codigo = $_GET["codigo"] ?? ($body["codigo"] ?? null);
+    $codigo = $_GET["codigo"] ?? ($body["codigo"] ?? null);
 
-            if (!empty($codigo)) {
-                $rspta = $producto->mostrar($codigo);
-            } else {
-                $rspta = $producto->listar();
-            }
+    if (!empty($codigo)) {
+        $rspta = $producto->mostrar($codigo);
 
-            $data = [];
-
-            if ($rspta instanceof PDOStatement) {
-                while ($reg = $rspta->fetch(PDO::FETCH_OBJ)) {
-                    $data[] = [
-                        $reg->Codigo,
-                        $reg->Nombre,
-                        $reg->Precio,
-                        $reg->Proveedor
-                    ];
-                }
-            } elseif (is_array($rspta)) {
-                $data[] = [
-                    $rspta["Codigo"] ?? null,
-                    $rspta["Nombre"] ?? null,
-                    $rspta["Precio"] ?? null,
-                    $rspta["Proveedor"] ?? null
-                ];
-            }
+        if (isset($rspta["Codigo"])) {
+            $data[] = [
+                $rspta["Codigo"],
+                $rspta["Nombre"],
+                $rspta["Precio"],
+                $rspta["CodigoProveedor"] ?? null
+            ];
 
             echo json_encode([
                 "sEcho" => 1,
-                "iTotalRecords" => count($data),
-                "iTotalDisplayRecords" => count($data),
+                "iTotalRecords" => 1,
+                "iTotalDisplayRecords" => 1,
                 "aaData" => $data
             ]);
             break;
+        }
+
+        echo json_encode(["Error" => "Producto no encontrado"]);
+        break;
+    }
+
+    $rspta = $producto->listar();
+    $data = [];
+
+    while ($reg = $rspta->fetch(PDO::FETCH_OBJ)) {
+        $data[] = [
+            "0" => $reg->Codigo,
+            "1" => $reg->Nombre,
+            "2" => $reg->Precio,
+            "3" => $reg->Proveedor
+        ];
+    }
+
+    echo json_encode([
+        "sEcho" => 1,
+        "iTotalRecords" => count($data),
+        "iTotalDisplayRecords" => count($data),
+        "aaData" => $data
+    ]);
+    break;
+
 
 
 
