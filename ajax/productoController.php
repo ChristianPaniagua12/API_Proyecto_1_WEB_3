@@ -103,37 +103,42 @@ try {
             break;
 
         case "GET":
-            if (isset($_GET["codigo"]) && !empty($_GET["codigo"])) {
-                $rspta = $producto->mostrar($_GET["codigo"]);
+            $codigo = $_GET["codigo"] ?? ($body["codigo"] ?? null);
 
-                if ($rspta) {
-                    echo json_encode($rspta);
-                } else {
-                    echo json_encode(["Error" => "Producto no encontrado"]);
-                }
-
-                exit();
+            if (!empty($codigo)) {
+                $rspta = $producto->mostrar($codigo);
+            } else {
+                $rspta = $producto->listar();
             }
-            $rspta = $producto->listar();
+
             $data = [];
 
-            while ($reg = $rspta->fetch(PDO::FETCH_OBJ)) {
+            if ($rspta instanceof PDOStatement) {
+                while ($reg = $rspta->fetch(PDO::FETCH_OBJ)) {
+                    $data[] = [
+                        $reg->Codigo,
+                        $reg->Nombre,
+                        $reg->Precio,
+                        $reg->Proveedor
+                    ];
+                }
+            } elseif (is_array($rspta)) {
                 $data[] = [
-                    "0" => $reg->Codigo,
-                    "1" => $reg->Nombre,
-                    "2" => $reg->Precio,
-                    "3" => $reg->Proveedor
+                    $rspta["Codigo"] ?? null,
+                    $rspta["Nombre"] ?? null,
+                    $rspta["Precio"] ?? null,
+                    $rspta["Proveedor"] ?? null
                 ];
             }
 
-            $results = [
+            echo json_encode([
                 "sEcho" => 1,
                 "iTotalRecords" => count($data),
                 "iTotalDisplayRecords" => count($data),
                 "aaData" => $data
-            ];
-            echo json_encode($results);
+            ]);
             break;
+
 
 
         default:
