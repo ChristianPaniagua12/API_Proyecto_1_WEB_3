@@ -105,19 +105,15 @@ try {
         case "GET":
             if (isset($_GET["codigo"]) && !empty($_GET["codigo"])) {
                 $rspta = $producto->mostrar($_GET["codigo"]);
-                $data = $rspta->fetch(PDO::FETCH_ASSOC);
 
-                if ($data) {
-                    echo json_encode($data);
+                if ($rspta) {
+                    echo json_encode($rspta);
                 } else {
                     echo json_encode(["Error" => "Producto no encontrado"]);
                 }
 
-                exit(); 
+                exit();
             }
-
-
-            // Listar todos
             $rspta = $producto->listar();
             $data = [];
 
@@ -138,6 +134,7 @@ try {
             ];
             echo json_encode($results);
             break;
+
 
         default:
             http_response_code(405);
