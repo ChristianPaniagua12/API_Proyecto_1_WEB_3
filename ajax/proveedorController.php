@@ -20,15 +20,15 @@ $body = json_decode(file_get_contents("php://input"), true);
 try {
     switch ($method) {
 
-        case "POST":
-            $rspta = $proveedor->insertar($body["codigo"], $body["nombre"], $body["telefono"], $body["correo"], $body["direccion"]);
+       case "POST":
+            $rspta = $proveedor->insertar($body["codigo"] ?? "", $body["nombre"] ?? "", $body["telefono"] ?? "", $body["correo"] ?? "", $body["direccion"] ?? "");
             if ($rspta == 1) {
-                echo json_encode(["Correcto" => "Producto agregado"]);
+                echo json_encode(["Correcto" => "Proveedor agregado"]);
+            } elseif ($rspta == 1062) {
+                echo json_encode(["Error" => "Código de proveedor repetido"]);
+            } else {
+                echo json_encode(["Error" => "No se pudo agregar el proveedor"]);
             }
-            if ($rspta == 1062) {
-                echo json_encode(["Error" => "Código de producto repetido"]);
-            }
-
             break;
 
         case "PUT":
