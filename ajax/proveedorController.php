@@ -24,10 +24,9 @@ try {
             $rspta = $proveedor->insertar($body["codigo"], $body["nombre"], $body["telefono"], $body["correo"], $body["direccion"]);
             if ($rspta == 1) {
                 echo json_encode(["Correcto" => "Producto agregado"]);
-            } elseif ($rspta == 1062) {
+            }
+            if ($rspta == 1062) {
                 echo json_encode(["Error" => "Código de producto repetido"]);
-            } else {
-                echo json_encode(["Error" => "No se pudo agregar el producto"]);
             }
 
             break;
