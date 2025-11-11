@@ -21,9 +21,13 @@ try {
     switch ($method) {
 
         case "POST":
-            $rspta = $proveedor->insertar($body["codigo"],$body["nombre"],$body["telefono"],$body["correo"],$body["direccion"]);
+            $rspta = $proveedor->insertar($body["codigo"], $body["nombre"], $body["telefono"], $body["correo"], $body["direccion"]);
 
-            if ($rspta === 1 || $rspta === true) {
+
+            $exito = ($rspta === 1 || $rspta === true ||
+                (is_object($rspta) && method_exists($rspta, 'rowCount') && $rspta->rowCount() >= 1));
+
+            if ($exito) {
                 echo json_encode(["Correcto" => "Proveedor agregado"]);
             } elseif ((int) $rspta === 1062) {
                 echo json_encode(["Error" => "Código de proveedor repetido"]);
@@ -31,6 +35,7 @@ try {
                 echo json_encode(["Error" => "No se pudo agregar el proveedor"]);
             }
             break;
+
 
 
         case "PUT":
