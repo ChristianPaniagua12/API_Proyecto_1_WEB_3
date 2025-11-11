@@ -89,7 +89,8 @@ try {
 
         case "PUT":
             $rspta = $producto->editar($codigo, $nombre, $precio, $codigoProveedor);
-            echo json_encode($rspta
+            echo json_encode(
+                $rspta
                 ? ["Correcto" => "Producto actualizado"]
                 : ["Error" => "Producto no se pudo actualizar"]
             );
@@ -97,7 +98,8 @@ try {
 
         case "DELETE":
             $rspta = $producto->eliminar($codigo);
-            echo json_encode($rspta
+            echo json_encode(
+                $rspta
                 ? ["Correcto" => "Producto eliminado"]
                 : ["Error" => "Producto no se pudo eliminar"]
             );
@@ -105,29 +107,26 @@ try {
 
         case "GET":
             if (!empty($codigo)) {
-                $rspta = $producto->mostrar($codigo);
+                $rspta = $producto->mostrar($codigo); // devuelve un objeto stdClass o null
 
-                if (!empty($rspta) && isset($rspta["Codigo"])) {
-                    $data[] = [
-                        $rspta["Codigo"],
-                        $rspta["Nombre"],
-                        $rspta["Precio"],
-                        $rspta["CodigoProveedor"] ?? null
-                    ];
-
+                // Si se obtuvo un registro válido
+                if (!empty($rspta) && isset($rspta->Codigo)) {
+                    // Enviar objeto plano (la vista de editar lo espera así)
                     echo json_encode([
-                        "sEcho" => 1,
-                        "iTotalRecords" => 1,
-                        "iTotalDisplayRecords" => 1,
-                        "aaData" => $data
+                        "Codigo" => $rspta->Codigo,
+                        "Nombre" => $rspta->Nombre,
+                        "Precio" => $rspta->Precio,
+                        "CodigoProveedor" => $rspta->CodigoProveedor ?? null
                     ]);
                     break;
                 }
 
+                // Si no se encontró el producto
                 echo json_encode(["Error" => "Producto no encontrado"]);
                 break;
             }
 
+            // Si no se envió código, listar todos
             $rspta = $producto->listar();
             $data = [];
 
@@ -152,6 +151,7 @@ try {
             http_response_code(405);
             echo json_encode(["Error" => "Método HTTP no permitido"]);
             break;
+
     }
 
 } catch (Exception $e) {
