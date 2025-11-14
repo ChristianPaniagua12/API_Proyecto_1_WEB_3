@@ -48,9 +48,28 @@ try {
             break;
 
         case "DELETE":
-            $rspta = $cliente->eliminar($body["cedula"] ?? "");
-            echo json_encode($rspta ? ["Correcto" => "Cliente eliminado"] : ["Error" => "Cliente no se pudo eliminar"]);
+            $cedula = $body["cedula"] ?? ($_GET["cedula"] ?? null);
+
+            if (empty($cedula)) {
+                http_response_code(400);
+                echo json_encode(["Error" => "Cédula de cliente no recibida"]);
+                break;
+            }
+
+            $rspta = $cliente->eliminar($cedula);
+
+            $exito = (
+                $rspta === 1 || $rspta === true ||
+                (is_object($rspta) && method_exists($rspta, 'rowCount') && $rspta->rowCount() >= 1)
+            );
+
+            if ($exito) {
+                echo json_encode(["Correcto" => "Cliente eliminado"]);
+            } else {
+                echo json_encode(["Error" => "Cliente no se pudo eliminar"]);
+            }
             break;
+
 
         case "GET":
             $cedula = $_GET["cedula"] ?? ($body["cedula"] ?? null);
