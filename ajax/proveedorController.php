@@ -44,9 +44,28 @@ try {
             break;
 
         case "DELETE":
-            $rspta = $proveedor->eliminar($body["codigo"]);
-            echo json_encode($rspta ? ["Correcto" => "Proveedor eliminado"] : ["Error" => "Proveedor no se pudo eliminar"]);
+            $codigo = $body["codigo"] ?? ($_GET["codigo"] ?? null);
+
+            if (empty($codigo)) {
+                http_response_code(400);
+                echo json_encode(["Error" => "Código de proveedor no recibido"]);
+                break;
+            }
+
+            $rspta = $proveedor->eliminar($codigo);
+
+            $exito = (
+                $rspta === 1 || $rspta === true ||
+                (is_object($rspta) && method_exists($rspta, 'rowCount') && $rspta->rowCount() >= 1)
+            );
+
+            if ($exito) {
+                echo json_encode(["Correcto" => "Proveedor eliminado"]);
+            } else {
+                echo json_encode(["Error" => "Proveedor no se pudo eliminar"]);
+            }
             break;
+
 
         case "GET":
             $nombre = $_GET["nombre"] ?? ($body["nombre"] ?? null);
