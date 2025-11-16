@@ -19,7 +19,6 @@ try {
     switch ($method) {
 
         case "POST":
-            // Guardar múltiples detalles
             $detalles = $body["detalles"] ?? [];
             
             if (empty($detalles)) {
@@ -67,14 +66,12 @@ try {
             $id = $_GET["id"] ?? "";
             $idEncabezado = $_GET["idEncabezado"] ?? "";
 
-            // Mostrar un detalle específico
             if (!empty($id)) {
                 $rspta = $facturaD->mostrar($id);
                 echo json_encode($rspta ?: ["Error" => "Detalle no encontrado"]);
                 break;
             }
 
-            // Listar detalles por encabezado
             if (!empty($idEncabezado)) {
                 $rspta = $facturaD->listarPorEncabezado($idEncabezado);
                 $data = [];
