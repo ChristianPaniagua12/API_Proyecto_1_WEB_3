@@ -77,7 +77,7 @@ try {
             }
 
             $data = [];
-            while ($reg = $rspta->fetch(PDO::FETCH_OBJ)) { // ✅ También cambié fetch() por fetch(PDO::FETCH_OBJ)
+            while ($reg = $rspta->fetch(PDO::FETCH_OBJ)) { 
                 $data[] = [
                     $reg->Codigo,
                     $reg->Nombre,
